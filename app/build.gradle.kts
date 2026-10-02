@@ -4,6 +4,11 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+// Firebase registration is app-specific. Keep local builds usable until the owner adds this app's config.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.madrigalsolu.nuestrodia.compose"
     compileSdk = 36
@@ -51,6 +56,9 @@ dependencies {
   // Core Android dependencies
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
+  implementation(libs.kotlinx.coroutines.play.services)
+  implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.auth)
   implementation(libs.androidx.activity.compose)
 
   // Arch Components
