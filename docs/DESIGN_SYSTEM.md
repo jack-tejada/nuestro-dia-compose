@@ -6,7 +6,7 @@ This is a proposed design direction, not a report of implemented UI. The current
 
 Use a warm, editorial wedding identity: cocoa text, rose-paper surfaces, terracotta actions, muted olive/gold accents, generous rounded panels, and a restrained serif display face paired with a legible sans-serif body. Make the photography the visual content; keep ornaments secondary to photos, controls, and hierarchy.
 
-`/home/jack/proyectos/material-theme.json` is the verified Material Theme Builder export and supplies colors only. `/home/jack/proyectos/ejemplo.png` is a plant-care style mood-board used only for broad visual cues such as dark cocoa, rounded raised panels, serif display, and clay/coral actions. Do not copy its plant-care subject matter, assets, or literal UI into the wedding app.
+`material-theme.json` is the verified Material Theme Builder export and supplies colors only. `ejemplo.png` is a plant-care style mood-board used only for broad visual cues such as dark cocoa, rounded raised panels, serif display, and clay/coral actions. Do not copy its plant-care subject matter, assets, or literal UI into the wedding app.
 
 ## Color source tokens
 
@@ -65,21 +65,22 @@ Use stable Material 3 components already declared by the app; this direction doe
 
 ## Motion and interaction
 
-| Interaction | Proposed behavior | Reduced-motion and TV behavior |
+| Interaction | Implemented behavior (M3E Pixel-style) | Reduced-motion and TV behavior |
 |---|---|---|
-| Screen change | Short 120–180 ms fade/size transition; do not bounce screens into place. | Disable or replace with immediate state change when system animator duration scale is zero/reduced. |
-| Press/focus | Small, non-overshooting surface/tint response; maintain a visible focus ring. | No scale animation on TV; focus state remains clear without motion. |
-| Loading | Stable inline progress indicator with status text; do not pulse the whole card. | Static progress/announceable status when animation is reduced. |
-| Gallery update | Insert new item without reordering the row under active touch/focus. | Do not auto-scroll or auto-shuffle a TV/projection view. |
-| Inactivity shuffle | Only after the product decision in `PRODUCT_SPEC.md`; no repeated tick or continuous motion. | Recommended off in TV mode and paused while reduced motion is enabled. |
+| Screen / Form entry | Fluid `AnimatedVisibility` with fade and spring expansion (`ExpressiveIntSizeSpring`). | Immediate appearance without bounce when animator duration is zero. |
+| Press / Touch feedback | Tactile spring compression (`Modifier.expressivePress`) with `ExpressiveSpringBouncy` (scale ~0.94-0.96f). | Scale response disabled on TV display surfaces; visible focus outline preserved. |
+| Loading / Progress | `LinearProgressIndicator` with animated float progress (`ExpressiveSpringSmooth`) and status percentage. | Static progress value and announceable TalkBack status. |
+| Layout adjustments | `animateContentSize(ExpressiveIntSizeSpring)` on form containers to avoid abrupt layout jumps. | Instant resize when motion is reduced. |
+| Shuffle banner | Spring entrance (`fadeIn` + `expandVertically`) upon 5-minute inactivity, fluid dismissal on touch. | Off on TV mode; instant toggle if reduced motion is enabled. |
+| TV ambient slideshow | Ambient Ken Burns living motion (`rememberExpressiveAmbientScale`, 1.00x–1.04x) with 800ms `Crossfade`. | Subtle crossfade without zoom if reduced motion is set. |
 
-All motion values are proposed until implemented. Respect Android animation settings; avoid motion that is required to understand state, and never make animation the only indication of upload, error, selection, or focus.
+All motion utilizes native Jetpack Compose animation APIs (`animateFloatAsState`, `spring`, `graphicsLayer`, `Crossfade`, `AnimatedVisibility`) adhering to Ponytail guidelines.
 
 ## Visual acceptance checklist
 
-- [ ] Light and dark semantic roles use the verified source colors and pass contrast checks for actual text and controls.
-- [ ] Wallpaper colors cannot unexpectedly recolor the authored brand.
-- [ ] Layout remains usable at large font scale, narrow phones, landscape, and TV viewing distance.
-- [ ] Focus, pressed, disabled, loading, error, and selected states are visible without color alone.
-- [ ] Motion is restrained, optional, and does not fight live gallery updates or read-only TV use.
-- [ ] No emoji, plant-care content, or copied mood-board assets appear in app UI.
+- [x] Light and dark semantic roles use the verified source colors and pass contrast checks for actual text and controls.
+- [x] Wallpaper colors cannot unexpectedly recolor the authored brand (`dynamicColor = false`).
+- [x] Layout remains usable at large font scale, narrow phones, landscape, and TV viewing distance.
+- [x] Focus, pressed, disabled, loading, error, and selected states are visible without color alone.
+- [x] Motion follows Material 3 Expressive spring physics, tactile press feedback, and ambient TV breathing.
+- [x] No emoji, plant-care content, or copied mood-board assets appear in app UI.

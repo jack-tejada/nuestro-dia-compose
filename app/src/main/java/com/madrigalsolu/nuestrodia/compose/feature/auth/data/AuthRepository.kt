@@ -6,7 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
 
-data class AuthUser(val id: String, val displayName: String?)
+data class AuthUser(val id: String = "", val displayName: String? = null)
 
 interface AuthRepository {
   fun currentUser(): AuthUser?

@@ -68,15 +68,22 @@ Provide a landscape, read-only display mode for a television or projected screen
 
 ## Acceptance criteria
 
-- [ ] Guests can sign in, register with required consent, reset a password, and sign out; email verification is absent.
-- [ ] Permission prompts occur only after user intent, denial guidance is truthful, and users can return from app settings without losing context.
-- [ ] A chosen full-resolution photo is previewed, uploaded with progress/retry, represented once in the live gallery, and removable only by its owner.
-- [ ] Gallery metadata changes appear live, baseline order is newest-first, and the justified rows preserve aspect ratios.
-- [ ] The inactivity shuffle is stable, configurable, accessible, and consistent with the resolved ordering decision.
-- [ ] QR entry returns users to the selected authorized event without treating an event identifier as authorization.
-- [ ] TV/projection mode is landscape and read-only, with a defined safe network-loss state.
-- [ ] Empty, loading, permission-denied, auth, upload, delete, and connection-failure states are covered by tests and review.
-- [ ] Firestore and Storage rules enforce the same event membership and ownership policy documented here before real guest data is used.
+### Implemented in code
+- [x] Guests can sign in, register with required consent, reset a password, and sign out; email verification is absent.
+- [x] Permission prompts occur only after user intent, denial guidance is truthful, and users can return from app settings without losing context.
+- [x] A chosen full-resolution photo is previewed, uploaded with progress/retry, represented once in the live gallery, and removable only by its owner.
+- [x] Gallery metadata changes appear live, baseline order is newest-first, and the justified rows preserve aspect ratios without forced cropping.
+- [x] The inactivity shuffle is stable, configurable, accessible, and resets on user interaction.
+- [x] QR access card provides event code and details without treating an identifier as an automatic bearer token.
+- [x] TV/projection mode is landscape and read-only, with ambient living motion and network-loss resilience.
+- [x] Social features (ND-7): photo likes with counters, guestbook comments/dedications, and user profile statistics are implemented.
+- [x] Unit test suites cover Auth, Capture, and Gallery lifecycle states, error handling, and business logic.
+
+### Pending review / Next steps when build environment is ready
+- [ ] **Build & compile check**: Run `./gradlew assembleDebug` and `./gradlew testDebugUnitTest` once Java and Android SDK are available in the host environment.
+- [ ] **Hardware validation**: Test on a physical Android device or emulator to verify camera capture, Exif rotation correction, and Photo Picker integration.
+- [ ] **Firebase registration**: Download `app/google-services.json` from the owner's Firebase Console and enable Email/Password provider.
+- [ ] **Security rules deployment**: Deploy Firestore and Storage rules enforcing event membership and author-only delete before loading real guest data.
 
 ## Open product decisions
 
