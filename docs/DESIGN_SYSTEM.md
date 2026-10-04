@@ -1,6 +1,6 @@
 # Nuestro Día design system
 
-This is a proposed design direction, not a report of implemented UI. The current app still uses the starter purple theme and Android dynamic colors. Promote a token or component to “implemented” only after source and visual review confirm it.
+This document defines the intended visual direction and source tokens. Authored theme, typography, shapes, and motion are present in source, but visual, contrast, accessibility, reduced-motion, and device acceptance have not been verified. Source presence alone does not mark these criteria complete.
 
 ## Visual direction
 
@@ -10,7 +10,7 @@ Use a warm, editorial wedding identity: cocoa text, rose-paper surfaces, terraco
 
 ## Color source tokens
 
-The values below are copied from the `light` and `dark` schemes in the JSON export. They are source values, not proof that current UI components meet contrast requirements. Validate actual text/icon pairs during implementation and visual QA.
+The values below are copied from the `light` and `dark` schemes in the JSON export and are used by the authored theme. They are not proof that rendered text/icon pairs meet contrast requirements. Validate actual pairs during visual QA.
 
 | Material role | Light | Dark |
 |---|---|---|
@@ -38,14 +38,14 @@ The values below are copied from the `light` and `dark` schemes in the JSON expo
 
 | Alias | Source role | Status |
 |---|---|---|
-| `BrandPrimary` | `primary` | Proposed |
-| `BrandPrimaryContainer` | `primaryContainer` | Proposed |
-| `BrandAccent` | `tertiary` | Proposed |
-| `Canvas` | `background` | Proposed |
-| `RaisedSurface` | `surfaceContainerLow` or `surfaceContainer` | Proposed; choose by contrast and elevation role |
-| `Danger` | `error` | Proposed |
+| `BrandPrimary` | `primary` | Source mapping; rendered use unverified |
+| `BrandPrimaryContainer` | `primaryContainer` | Source mapping; rendered use unverified |
+| `BrandAccent` | `tertiary` | Source mapping; rendered use unverified |
+| `Canvas` | `background` | Source mapping; rendered use unverified |
+| `RaisedSurface` | `surfaceContainerLow` or `surfaceContainer` | Source mapping; rendered use unverified |
+| `Danger` | `error` | Source mapping; rendered use unverified |
 
-Keep color roles semantic; avoid hard-coded colors inside screens. Dynamic wallpaper color should not override the authored brand palette. The current `Theme.kt` still defaults `dynamicColor` to true, so that recommendation is not implemented yet.
+Keep color roles semantic; avoid hard-coded colors inside screens. `Theme.kt` disables dynamic color in source; device rendering has not been checked.
 
 ## Proposed shape, type, icon, and component tokens
 
@@ -65,22 +65,21 @@ Use stable Material 3 components already declared by the app; this direction doe
 
 ## Motion and interaction
 
-| Interaction | Implemented behavior (M3E Pixel-style) | Reduced-motion and TV behavior |
+| Interaction | Authored source direction | Acceptance status |
 |---|---|---|
-| Screen / Form entry | Fluid `AnimatedVisibility` with fade and spring expansion (`ExpressiveIntSizeSpring`). | Immediate appearance without bounce when animator duration is zero. |
-| Press / Touch feedback | Tactile spring compression (`Modifier.expressivePress`) with `ExpressiveSpringBouncy` (scale ~0.94-0.96f). | Scale response disabled on TV display surfaces; visible focus outline preserved. |
-| Loading / Progress | `LinearProgressIndicator` with animated float progress (`ExpressiveSpringSmooth`) and status percentage. | Static progress value and announceable TalkBack status. |
-| Layout adjustments | `animateContentSize(ExpressiveIntSizeSpring)` on form containers to avoid abrupt layout jumps. | Instant resize when motion is reduced. |
-| Shuffle banner | Spring entrance (`fadeIn` + `expandVertically`) upon 5-minute inactivity, fluid dismissal on touch. | Off on TV mode; instant toggle if reduced motion is enabled. |
-| TV ambient slideshow | Ambient Ken Burns living motion (`rememberExpressiveAmbientScale`, 1.00x–1.04x) with 800ms `Crossfade`. | Subtle crossfade without zoom if reduced motion is set. |
+| Screen / Form entry | Compose visibility and spring animation helpers. | Runtime/reduced-motion behavior unverified. |
+| Press / Touch feedback | Authored press interaction helper. | Device response, focus visibility, and TV behavior unverified. |
+| Loading / Progress | Authored progress UI and motion helper. | Announcement and assistive-technology behavior unverified. |
+| Layout adjustments | Authored content-size animation helper. | Large text and reduced-motion behavior unverified. |
+| Shuffle banner | Authored gallery inactivity interaction. | Timing, stability, accessibility, and TV behavior unverified. |
+| TV ambient slideshow | Authored slideshow motion and crossfade. | Landscape lock, timing, reduced-motion, and device behavior unverified. |
 
 All motion utilizes native Jetpack Compose animation APIs (`animateFloatAsState`, `spring`, `graphicsLayer`, `Crossfade`, `AnimatedVisibility`) adhering to Ponytail guidelines.
 
 ## Visual acceptance checklist
 
-- [x] Light and dark semantic roles use the verified source colors and pass contrast checks for actual text and controls.
-- [x] Wallpaper colors cannot unexpectedly recolor the authored brand (`dynamicColor = false`).
-- [x] Layout remains usable at large font scale, narrow phones, landscape, and TV viewing distance.
-- [x] Focus, pressed, disabled, loading, error, and selected states are visible without color alone.
-- [x] Motion follows Material 3 Expressive spring physics, tactile press feedback, and ambient TV breathing.
-- [x] No emoji, plant-care content, or copied mood-board assets appear in app UI.
+- [ ] Verify light/dark rendered text and controls meet contrast requirements.
+- [ ] Verify large font scale, narrow phones, landscape, and TV viewing distance.
+- [ ] Verify focus, pressed, disabled, loading, error, and selected states, including TalkBack labels and announcements.
+- [ ] Verify motion and reduced-motion behavior on devices; authored spring/ambient motion is not acceptance evidence.
+- [ ] Verify final UI contains no emoji or copied mood-board assets.

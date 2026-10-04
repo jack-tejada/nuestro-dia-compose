@@ -8,7 +8,7 @@ Complete these steps only when the app owner is ready to configure Firebase:
 
 1. Register a **separate Android app** in the intended Firebase project with application ID `com.madrigalsolu.nuestrodia.compose`.
 2. Download that app’s own `google-services.json` and place it at `app/google-services.json` locally. Never reuse either reference app’s configuration.
-3. The Google Services plugin is conditionally applied only when that local file exists. The current root and app Gradle files declare the plugin and Firebase Authentication dependency; Firestore and Storage are not yet wired.
+3. The Google Services plugin is conditionally applied only when that local file exists. Source now calls Firebase Auth, Firestore, and Storage; no configured project or end-to-end Firebase verification is included.
 4. Before adding the file, configure a personal/global Git exclude or an explicitly approved repository ignore rule for `app/google-services.json`; the current `.gitignore` files do not exclude it. Check `git status` before any commit. Do not put service-account credentials, private keys, or server secrets in the Android client.
 5. In Firebase Authentication settings, enable Email/Password. The demo has no email-verification step.
 6. Rebuild and test with a dedicated authorized test account after an owner has configured the project. Never claim end-to-end authentication from unit tests or a local APK built without this configuration.
@@ -17,22 +17,24 @@ No Firebase setup step was executed for the current handoff. Adding local config
 
 ## Current implementation boundary
 
-- PR 1 (`56999ce`) adds `FirebaseAuthRepository`, an `AuthRepository` interface, an `AuthViewModel` with `StateFlow` loading/error state, validation, and unit tests.
-- The repository safely reports missing Firebase initialization rather than assuming a default app exists.
-- `Navigation.kt` is still the starter `Main` route and `MainScreen`; there are no auth composables/routes or terms screen in the current source.
-- The theme remains the starter purple scheme and still enables Android dynamic color by default.
-- There are no Firestore/Storage dependencies, data writes, deployed rules, event membership records, photo uploads, deletion behavior, or Firebase end-to-end tests.
+- Auth, photo metadata, Storage uploads/deletes, likes, and comments have repository-backed source paths. Authored fake-repository tests do not verify Firebase wiring or rules; tests/builds have not been run for the current reliability changes.
+- Uploads use `events/{eventId}/photos/{photoId}` metadata and `events/{eventId}/photos/{ownerUid}/{photoId}/original` Storage objects. The Firestore photo document contains `id`, `eventId`, `ownerUid`, `ownerName`, `storagePath`, `timestamp`, `width`, `height`, `aspectRatio`, and `uploadStatus`. It is written as `pending` before upload and as `ready` only after Storage upload and download-URL acknowledgement. Gallery reads omit `pending` documents.
+- A retry reuses the ViewModel's UUID and selected URI in memory; process-death durability is not implemented. The app stores Firebase `downloadUrl` as `uriString`; these URLs are shareable. Access/rotation and associated privacy policy remain unresolved.
+- Deletion removes the Storage object before Firestore metadata. Only Storage object-not-found is tolerated for retry; metadata/cache changes occur after remote confirmation. Partial failure can leave metadata without an object until retried.
+- Likes use a Firestore transaction over the current `likedByUids` list, normalizing distinct UIDs and deriving `likesCount`. Like/comment local state follows remote acknowledgement.
+- Client-side owner checks are UX behavior only. They do not enforce security. No Firestore/Storage rules, membership provisioning, or backend authorization have been implemented or deployed.
+- Firebase-unconfigured mutations fail explicitly rather than returning fake success. The in-memory event/photo store is not an upload or social persistence fallback.
 
 ## Planned Firebase responsibilities
 
 | Capability | Intended boundary | Current status |
 |---|---|---|
-| Authentication | Auth UI sends actions to a ViewModel; repository wraps Firebase Auth and maps Firebase users/errors into app-owned types. | Repository/ViewModel only; UI is not connected. |
-| Firestore gallery metadata | Feature repository exposes event/photo models and live metadata updates; composables do not call Firestore. | Not implemented. |
-| Storage media | Capture feature uploads original-resolution media and returns progress/retry state through its repository boundary. | Not implemented. |
-| Authorization | Firebase Security Rules enforce event membership, authenticated reads, uploader ownership, and owner-only delete. | Rules and membership model are not implemented. |
+| Authentication | Auth UI sends actions to a ViewModel; repository wraps Firebase Auth and maps Firebase users/errors into app-owned types. | UI, repository, and ViewModel source are connected; Firebase runtime verification is pending. |
+| Firestore gallery metadata | Feature repository exposes event/photo models and live metadata updates; composables do not call Firestore. | Source implemented; backend/runtime verification pending. |
+| Storage media | Capture feature uploads media and returns progress/retry state through its repository boundary. | Source implemented; process-death retry durability and runtime behavior unverified. |
+| Authorization | Firebase Security Rules enforce event membership, authenticated reads, uploader ownership, and owner-only delete. | Rules and membership model are not implemented or deployed. |
 
-### Proposed data model (not implemented)
+### Current client data shape (not a security policy)
 
 Use an event boundary rather than a global unscoped gallery. A candidate model for review is:
 
@@ -43,9 +45,9 @@ events/{eventId}/photos/{photoId}
 Storage: events/{eventId}/photos/{ownerUid}/{photoId}/original
 ```
 
-Proposed photo metadata is limited to the fields needed for display and authorization: owning UID, event ID, Storage object path, server upload timestamp, content type, and image dimensions. Avoid storing image bytes as Base64 or treating a long-lived download URL as authorization. Do not treat `eventId`, a QR URL, or a client-supplied `ownerUid` as proof of membership or ownership.
+The current client writes photo ID, event ID, owner UID/name, Storage path, client timestamp, dimensions/aspect ratio, upload status, download URL, and like UID/count fields. It uses a client timestamp, not a server upload timestamp. A download URL is shareable and is not proof of membership or ownership. Do not treat `eventId`, a QR URL, or client-supplied `ownerUid` as proof of membership or ownership.
 
-This schema, membership provisioning, admin role, and timestamp semantics remain proposals. Confirm them before creating collections or remote resources.
+Membership provisioning, admin role, timestamp semantics, and the accepted photo fields remain subject to owner decisions. No remote collections/resources have been created by this work.
 
 ## Security and privacy expectations
 
@@ -57,6 +59,7 @@ This schema, membership provisioning, admin role, and timestamp semantics remain
 - Do not promise retention duration, permanent deletion semantics, backups behavior, or administrator access until an owner and policy are decided.
 - Define whether the gallery is public to anyone with a link or restricted to event members before any real guest photos are used. The safe default is member-only access; no anonymous read is implied.
 - The terms screen must describe visibility and removal in plain Spanish, but displayed terms do not enforce backend rules.
+- Decide whether shareable Firebase download URLs are acceptable for event photos and how they should be revoked or rotated; do not imply that a URL is member-gated.
 
 ## Verification boundary
 

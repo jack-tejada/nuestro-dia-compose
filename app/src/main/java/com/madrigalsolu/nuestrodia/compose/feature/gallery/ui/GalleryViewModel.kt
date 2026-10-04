@@ -6,6 +6,7 @@ import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Comment
 import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Photo
 import com.madrigalsolu.nuestrodia.compose.feature.gallery.data.Event
 import com.madrigalsolu.nuestrodia.compose.feature.gallery.data.GalleryRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -50,8 +51,13 @@ class GalleryViewModel(
 
   private fun loadEvent() {
     viewModelScope.launch {
-      runCatching { repository.getEvent(eventId) }
-        .onSuccess { _event.value = it }
+      try {
+        _event.value = repository.getEvent(eventId)
+      } catch (error: CancellationException) {
+        throw error
+      } catch (_: Exception) {
+        // The event stream can still fall back to the local event store.
+      }
     }
   }
 
@@ -148,6 +154,11 @@ class GalleryViewModel(
             _selectedPhoto.value = updatedPhoto
           }
         }
+        .onFailure { error ->
+          _uiState.value = GalleryUiState.Error(
+            error.message ?: "No se pudo actualizar el me gusta. Intenta de nuevo.",
+          )
+        }
     }
   }
 
@@ -166,6 +177,11 @@ class GalleryViewModel(
     viewModelScope.launch {
       repository.addComment(photoId, eventId, authorUid, authorName, text)
         .onSuccess { onSuccess() }
+        .onFailure { error ->
+          _uiState.value = GalleryUiState.Error(
+            error.message ?: "No se pudo guardar el comentario. Intenta de nuevo.",
+          )
+        }
     }
   }
 }

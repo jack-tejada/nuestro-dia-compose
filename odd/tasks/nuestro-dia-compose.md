@@ -23,33 +23,32 @@ The source package identity is `com.madrigalsolu.nuestrodia.compose`. Do not cop
 
 | ID | Work unit | State |
 |---|---|---|
-| ND-0 | Read-only mapping of CLI, visual source, old app, and class reference. | Complete |
-| ND-1 | Create the Kotlin/Compose sibling app and record architecture/build evidence. | Complete |
-| ND-2 / PR 1 | FirebaseAuth repository, auth ViewModel/state, validation, unit tests, Gradle dependencies. | Complete |
-| ND-2 / PR 2 | Auth composables and Navigation3 routes for sign-in, registration, reset, terms, and session routing. | Complete |
-| ND-2 / PR 3 | Auth brand/theme, remove starter screen/tests, align architecture and progress docs with source. | Complete |
-| ND-3 | Camera/photo-picker permissions and denial/settings guidance. | Complete |
-| ND-4 | Full-resolution capture, durable Storage upload progress/retry, owner-only deletion. | Complete |
-| ND-5 | Shared live gallery, aspect-ratio justified rows, newest-first ordering, stable inactivity shuffle, QR card. | Complete |
-| ND-6 | Landscape, read-only TV/projection mode. | Complete |
-| ND-7 | Guest interaction: likes, photo comments/wishes, and user profile statistics. | Complete |
+| ND-0 | Read-only mapping of CLI, visual source, old app, and class reference. | Mapping complete (static) |
+| ND-1 | Create the Kotlin/Compose sibling app and record architecture/build evidence. | Source created; current build/runtime not reverified |
+| ND-2 / PR 1 | FirebaseAuth repository, auth ViewModel/state, validation, unit tests, Gradle dependencies. | Source authored; Firebase/build/test behavior unverified |
+| ND-2 / PR 2 | Auth composables and Navigation3 routes for sign-in, registration, reset, terms, and session routing. | Source authored; runtime unverified |
+| ND-2 / PR 3 | Auth brand/theme, remove starter screen/tests, align architecture and progress docs with source. | Source authored; visual/runtime acceptance unverified |
+| ND-3 | Camera/photo-picker permissions and denial/settings guidance. | Source authored; device behavior unverified |
+| ND-4 | Full-resolution capture, Storage upload progress/retry, owner-only deletion. | Source authored; retry is in-memory, runtime/backend authorization unverified |
+| ND-5 | Shared live gallery, aspect-ratio justified rows, newest-first ordering, stable inactivity shuffle, QR card. | Source authored; runtime/access-control policy unverified |
+| ND-6 | Landscape, read-only TV/projection mode. | Source authored; landscape lock and device behavior unverified |
+| ND-7 | Guest interaction: likes, photo comments/wishes, and user profile statistics. | Source authored; Firebase/runtime behavior unverified |
 
-## Architecture and Feature Implementation Summary
+## Current Source Snapshot (Not Runtime Acceptance)
 
-All planned features have been implemented following the architectural boundaries:
-- `feature/auth`: Full authentication UI (`SignInScreen`, `RegisterScreen`, `ResetPasswordScreen`, `TermsScreen`, `AuthComponents`) connected with `AuthViewModel` and `FirebaseAuthRepository`.
-- `feature/permissions`: Camera permission controller with rationale dialog, direct fallback to Photo Picker (`PickVisualMedia`), and app settings redirection guidance (`Settings.ACTION_APPLICATION_DETAILS_SETTINGS`).
-- `feature/capture`: `CapturePreviewScreen` requiring explicit user confirmation before upload, `CaptureViewModel` managing upload progress states, retry logic, and owner-only deletion through `CaptureRepository`.
-- `feature/gallery`: `GalleryScreen` with aspect-ratio preserving justified photo layout, newest-first baseline ordering, configurable 5-minute inactivity session shuffle with instant user touch restoration, `PhotoDetailDialog` with owner deletion, photo likes, comments/wishes, and `QrEventDialog`.
-- `feature/display`: `TvDisplayScreen` providing a read-only landscape ambient slideshow for projector/TV with zero mutation controls and resilient display during offline/network interruptions.
-- `feature/profile`: `ProfileScreen` with user statistics (uploaded photos count, total likes received), terms access, and account sign-out.
-- `theme`: Authored Light and Dark palettes matching `docs/DESIGN_SYSTEM.md`, disabled dynamic wallpaper coloring, custom typography (Serif headlines, Sans-serif body) and rounded component shapes (8–28 dp).
-- `Navigation`: Modern Navigation3 implementation using type-safe serializable `NavKey` declarations (`SignInKey`, `RegisterKey`, `ResetPasswordKey`, `TermsKey`, `GalleryKey`, `CapturePreviewKey`, `TvDisplayKey`, `ProfileKey`).
+Auth, permission, capture, gallery, display, profile, social, theme, and navigation source surfaces are present. This inventory does not prove that behavior builds, works on devices, meets accessibility/visual acceptance, or is secured by Firebase rules.
 
-## Verification & Review Checklist (when build tools are ready)
+- Capture uses a ViewModel UUID and selected URI for in-memory retries. Repository reads current readiness from Firestore `Source.SERVER`, writes a `pending` document before Storage upload, then writes `ready` metadata only after remote Storage and metadata acknowledgement. Gallery listeners omit pending documents. Retry identity/URI do not survive process death.
+- Gallery deletion is Storage-first, tolerates only Storage object-not-found on retry, deletes Firestore metadata second, and updates local cache after remote success. UI owner checks are not backend authorization.
+- Likes use a Firestore transaction over distinct liked-user IDs and derive the count from that normalized list. Like/comment UI state follows remote acknowledgement.
+- Firebase-unconfigured mutation operations fail explicitly; in-memory demo state is not a fake Firebase write. Stored Firebase download URLs are shareable; their privacy/revocation policy remains unresolved.
+- Membership, rules, privacy, retention, consent, and other D-01 through D-07 decisions remain open. No Firestore/Storage rules are implemented or deployed. Landscape locking, M3E motion, accessibility/contrast, offline resilience, and security are unverified at runtime.
 
-- [x] Code authored cleanly according to Jetpack Compose best practices, M3E motion, and Ponytail simplicity.
-- [x] Comprehensive unit tests created: `AuthViewModelTest.kt`, `CaptureViewModelTest.kt`, and `GalleryViewModelTest.kt`.
+## Verification & Review Checklist (Pending)
+
+- [x] Focused regression tests for current upload and social behavior are authored; they have not been executed.
+- [ ] Build, unit tests, install, device/runtime, accessibility/design, offline, and Firebase/backend acceptance remain pending.
+- [ ] Security rules and membership decisions remain owner-controlled; none are implemented or deployed.
 - [ ] Run `./gradlew assembleDebug` and `./gradlew testDebugUnitTest` once Java and Android SDK are installed.
 - [ ] Physical device / emulator verification: test Camera capture, Exif rotation correction, and Photo Picker.
 - [ ] Add `app/google-services.json` and enable Email/Password provider in Firebase Console.
@@ -72,9 +71,9 @@ The current source at `a5b9bc2` implements the feature surfaces, but source pres
 | ID | Source-writing task | Route and evidence | State |
 |---|---|---|---|
 | ND-8 | Replace unsupported remote photo decoding with maintained URI/HTTPS loading and meaningful loading/failure states. | Delegated: shared image flow across multiple non-trivial screens. | Source written; runtime-unverified |
-| ND-9 | Propagate upload/delete failures, preserve cancellation, reuse upload identity across retry, and handle partial deletion safely. | Delegated: repository/ViewModel contracts and regression test changes. | Pending |
-| ND-10 | Use current backend state for concurrent likes and propagate social persistence failures. | Delegated: transaction logic, local parity, and regression checks. | Pending |
-| ND-11 | Reconcile README, architecture, product/design/Firebase docs and checklist with authored source versus verified behavior. | Delegated: multiple documentation surfaces and current-source reconciliation. | Pending |
+| ND-9 | Propagate upload/delete failures, preserve cancellation, reuse upload identity across retry, and handle partial deletion safely. | One shared repository/ViewModel/test work unit with ND-10: upload anchors and social mutations share backend-success/local-cache ordering. | Source written; runtime-unverified |
+| ND-10 | Use current backend state for concurrent likes and propagate social persistence failures. | Combined with ND-9 as one coherent backend-mutation reliability work unit; regression tests authored but not run. | Source written; runtime-unverified |
+| ND-11 | Reconcile README, architecture, product/design/Firebase docs and checklist with authored source versus verified behavior. | Delegated: multiple documentation surfaces and current-source reconciliation. | Complete: static-only, no runtime/build/test/device/backend proof |
 
 Acceptance is source-level behavior plus honest verification status. Keep test/device/Firebase checks pending until an authorized capable environment exists. Backend membership/rules and privacy decisions remain blocked on owner input; they are not silently included in the completed corrections.
 
@@ -87,7 +86,14 @@ Forecast: approximately 600-900 authored additions/deletions across coherent uni
 - ND-8 source: Coil 3.4.0 Compose + OkHttp loading replaces the synchronous `ContentResolver.openInputStream` decoder across gallery, detail, TV, and capture preview; one `PhotoImage` handles Spanish loading/failure states, disk caching is disabled, Fit/Crop plus EXIF-aware decoding are retained, and capture upload dimensions still update from the asynchronously loaded image.
 - ND-8 static checks: `git diff --check` passed; repository-wide caller grep found no `decodeSampledBitmapFromUri` references after removing `ImageUtils.kt`; dependency aliases and app usage were read back. No tests/build/device check ran, as instructed; runtime image loading remains unverified.
 - ND-8 dependency rationale: Coil 3.4.0's release notes list Kotlin 2.3.10 and Compose 1.9.3, matching the installed Kotlin 2.3.20 generation without raising the project toolchain to use 3.6.3; the latter release is built with Kotlin 2.4.10. HTTPS support comes from Coil's documented `coil-network-okhttp` artifact.
-- Next action: ND-9 upload/delete reliability corrections.
+- ND-9/ND-10 source: capture upload now uses a ViewModel-owned UUID reused by retry and a pending Firestore photo anchor at the stable photo ID/storage path before Storage upload; only acknowledged ready metadata enters the local photo store, and gallery reads hide pending records while retaining legacy records without a status. Firebase-unconfigured mutations fail explicitly. Deletion removes Storage before metadata, tolerates only Storage object-not-found on retry, then changes local state after remote confirmation. Likes use a Firestore transaction over current backend liked-user IDs/count; comments validate text/user ID, and social local updates happen only after persistence acknowledgement. Existing photo cache upsert-by-ID is retained. `CaptureRepository.deletePhoto` was removed after source/test caller grep found no callers.
+- ND-9/ND-10 regressions authored: capture retry reuses its operation ID while a new upload gets another; duplicate upload/retry submissions are ignored while active; reset cancels and ignores late progress; cancellation is not converted into a retryable UI error; gallery ViewModel surfaces like/comment failures without optimistic selection/cache updates. Tests are unexecuted. Process-death URI/retry durability remains out of scope; upload retry state is in-memory only. No ambiguous metadata failure triggers blind Storage cleanup.
+- ND-9 follow-up static correction: the ready-state read uses Firestore `Source.SERVER`, avoiding a cached ready record being mistaken for current remote acknowledgement. Capture ViewModel tracks one active job plus an attempt generation, filters stale callbacks/results, and retains the canceled job guard through completion. Storage upload cancellation explicitly cancels its Firebase `UploadTask` and removes its progress listener in `finally`. Likes now sanitize/distinct backend UID values and derive count from the resulting list rather than preserving a drifted stored count. Newly authored UI messages use neutral Spanish.
+- ND-9/ND-10 static checks: `git diff --check` and static caller/readback checks only; no runnable RED/GREEN, tests, build, install, formatter, Firebase access, or device proof. Runtime/backend behavior remains unverified; no security certification is claimed.
+- Combined ND-9/ND-10 work-unit rationale: both correct the same remote-acknowledgement/local-cache boundary and failure semantics; artificial separation would make partial-success behavior harder to review.
+- ND-11 documentation reconciliation: README, architecture, product, design, Firebase setup, review checklist, and this ledger now distinguish source presence from verified behavior; pending/ready upload schema and deletion order are documented, download-URL privacy is unresolved, and D-01 through D-07 remain open. Static `git diff --check` and changed-doc readback are the only permitted checks for this unit; runtime/build/tests/device/backend launch acceptance remain pending.
+- Next action: owner decisions and authorized runtime/build/device/backend verification; do not claim the app is ready for launch or that backend authorization exists.
+- ND-8 local commit: `4744560` (`fix(media): load local and remote photos asynchronously`), 371 authored changed lines. Native assessment against `a5b9bc2`: medium, `review_due: false`, `under_budget`; the slice remains pending and its reviewed boundary has not advanced. Parent repeated `git diff --check` successfully.
 
 ## Relevant files
 

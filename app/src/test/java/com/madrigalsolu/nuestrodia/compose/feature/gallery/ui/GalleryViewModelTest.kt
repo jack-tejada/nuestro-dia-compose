@@ -161,13 +161,33 @@ class GalleryViewModelTest {
     assertEquals("Muchas felicidades a los novios!", comments[0].text)
     assertEquals("Carlos", comments[0].authorName)
   }
+
+  @Test fun failedLikeAndCommentAreReportedWithoutChangingSelectedPhoto() = runTest(dispatcher) {
+    val photo = Photo(id = "p1", eventId = "boda-1", ownerUid = "u1", ownerName = "Ana")
+    val fakeRepo = FakeGalleryRepository(listOf(photo), failLikes = true, failComments = true)
+    val viewModel = GalleryViewModel(repository = fakeRepo, eventId = "boda-1")
+    advanceUntilIdle()
+    viewModel.selectPhoto(photo)
+
+    viewModel.toggleLike(photo, "u2")
+    advanceUntilIdle()
+    assertEquals(photo, viewModel.selectedPhoto.value)
+    assertTrue(viewModel.uiState.value is GalleryUiState.Error)
+
+    viewModel.addComment("p1", "u2", "Carlos", "Comentario")
+    advanceUntilIdle()
+    assertTrue(viewModel.uiState.value is GalleryUiState.Error)
+    assertTrue(fakeRepo.commentsFlow.first()["p1"].isNullOrEmpty())
+  }
 }
 
 private class FakeGalleryRepository(
   initialPhotos: List<Photo> = emptyList(),
+  private val failLikes: Boolean = false,
+  private val failComments: Boolean = false,
 ) : GalleryRepository {
   private val photosFlow = MutableStateFlow(initialPhotos)
-  private val commentsFlow = MutableStateFlow<Map<String, List<Comment>>>(emptyMap())
+  val commentsFlow = MutableStateFlow<Map<String, List<Comment>>>(emptyMap())
 
   override fun getPhotos(eventId: String): Flow<List<Photo>> = photosFlow
 
@@ -184,6 +204,7 @@ private class FakeGalleryRepository(
   }
 
   override suspend fun toggleLike(photo: Photo, userId: String): Result<Photo> {
+    if (failLikes) return Result.failure(IllegalStateException("Like persistence failed"))
     val alreadyLiked = photo.likedByUids.contains(userId)
     val updatedUids = if (alreadyLiked) {
       photo.likedByUids.filter { it != userId }
@@ -209,6 +230,7 @@ private class FakeGalleryRepository(
     authorName: String,
     text: String,
   ): Result<Comment> {
+    if (failComments) return Result.failure(IllegalStateException("Comment persistence failed"))
     val comment = Comment(
       id = "c-${System.currentTimeMillis()}",
       photoId = photoId,

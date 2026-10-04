@@ -4,11 +4,14 @@ import android.net.Uri
 import com.madrigalsolu.nuestrodia.compose.feature.capture.data.CaptureRepository
 import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Photo
 import com.madrigalsolu.nuestrodia.compose.feature.capture.data.UploadState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -79,6 +82,71 @@ class CaptureViewModelTest {
     viewModel.reset()
     assertEquals(UploadState.Idle, viewModel.uploadState.value)
   }
+
+  @Test fun retryReusesOperationIdAndNewUploadCreatesAnotherId() = runTest(dispatcher) {
+    val expectedPhoto = Photo(id = "p1", eventId = "boda-1", ownerUid = "u1", ownerName = "Ana")
+    val fakeRepo = FakeCaptureRepository(
+      result = Result.failure(IllegalStateException("Error de red")),
+      additionalResults = listOf(Result.success(expectedPhoto), Result.success(expectedPhoto)),
+    )
+    val viewModel = CaptureViewModel(fakeRepo)
+    val firstUri = Uri.parse("content://photo/1")
+
+    viewModel.uploadPhoto("boda-1", firstUri, "u1", "Ana", 1200, 800)
+    advanceUntilIdle()
+    viewModel.retryUpload("boda-1", "u1", "Ana")
+    advanceUntilIdle()
+    val retriedId = fakeRepo.photoIds.last()
+
+    viewModel.uploadPhoto("boda-1", Uri.parse("content://photo/2"), "u1", "Ana", 1200, 800)
+    advanceUntilIdle()
+
+    assertEquals(fakeRepo.photoIds[0], fakeRepo.photoIds[1])
+    assertTrue(retriedId != fakeRepo.photoIds[2])
+  }
+
+  @Test fun uploadCancellationIsNotConvertedIntoRetryableFailure() = runTest(dispatcher) {
+    val fakeRepo = FakeCaptureRepository(result = Result.failure(CancellationException("cancelled")))
+    val viewModel = CaptureViewModel(fakeRepo)
+
+    viewModel.uploadPhoto("boda-1", Uri.parse("content://photo/1"), "u1", "Ana", 1200, 800)
+    advanceUntilIdle()
+
+    assertTrue(viewModel.uploadState.value !is UploadState.Error)
+  }
+
+  @Test fun duplicateUploadAndRetryAreIgnoredWhileUploadIsActive() = runTest(dispatcher) {
+    val uploadGate = CompletableDeferred<Unit>()
+    val fakeRepo = FakeCaptureRepository(uploadGate = uploadGate)
+    val viewModel = CaptureViewModel(fakeRepo)
+
+    viewModel.uploadPhoto("boda-1", Uri.parse("content://photo/1"), "u1", "Ana", 1200, 800)
+    advanceUntilIdle()
+    viewModel.uploadPhoto("boda-1", Uri.parse("content://photo/2"), "u1", "Ana", 1200, 800)
+    viewModel.retryUpload("boda-1", "u1", "Ana")
+    advanceUntilIdle()
+
+    assertEquals(1, fakeRepo.photoIds.size)
+    uploadGate.complete(Unit)
+    advanceUntilIdle()
+    assertEquals(1, fakeRepo.photoIds.size)
+  }
+
+  @Test fun resetCancelsUploadAndIgnoresLateProgress() = runTest(dispatcher) {
+    val uploadGate = CompletableDeferred<Unit>()
+    val fakeRepo = FakeCaptureRepository(uploadGate = uploadGate)
+    val viewModel = CaptureViewModel(fakeRepo)
+
+    viewModel.uploadPhoto("boda-1", Uri.parse("content://photo/1"), "u1", "Ana", 1200, 800)
+    advanceUntilIdle()
+    val staleProgress = fakeRepo.progressCallbacks.single()
+
+    viewModel.reset()
+    runCurrent()
+    staleProgress(0.75f)
+
+    assertEquals(UploadState.Idle, viewModel.uploadState.value)
+  }
 }
 
 private class FakeCaptureRepository(
@@ -96,9 +164,16 @@ private class FakeCaptureRepository(
       aspectRatio = 1.5f,
     )
   ),
+  private val additionalResults: List<Result<Photo>> = emptyList(),
+  private val uploadGate: CompletableDeferred<Unit>? = null,
 ) : CaptureRepository {
+  val photoIds = mutableListOf<String>()
+  val progressCallbacks = mutableListOf<(Float) -> Unit>()
+  private var callCount = 0
+
   override suspend fun uploadPhoto(
     eventId: String,
+    photoId: String,
     imageUri: Uri,
     width: Int,
     height: Int,
@@ -106,9 +181,12 @@ private class FakeCaptureRepository(
     ownerName: String,
     onProgress: (Float) -> Unit,
   ): Photo {
+    photoIds += photoId
+    progressCallbacks += onProgress
+    uploadGate?.await()
     onProgress(1.0f)
-    return result.getOrThrow()
+    val attemptResult = (listOf(result) + additionalResults).getOrElse(callCount) { result }
+    callCount += 1
+    return attemptResult.getOrThrow()
   }
-
-  override suspend fun deletePhoto(photo: Photo, requesterUid: String): Boolean = true
 }

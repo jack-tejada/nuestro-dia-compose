@@ -1,6 +1,6 @@
 # Nuestro Día product specification
 
-This document records the intended wedding-photo sharing experience. Requirements describe the target product; decisions marked **Open** are not implemented or silently settled.
+This document records the intended wedding-photo sharing experience. Requirements describe the target product; decisions marked **Open** are not settled. Source presence is not proof of runtime behavior, accessibility, security, or acceptance.
 
 ## Product and users
 
@@ -68,23 +68,16 @@ Provide a landscape, read-only display mode for a television or projected screen
 
 ## Acceptance criteria
 
-### Implemented in code
-- [x] Guests can sign in, register with required consent, reset a password, and sign out; email verification is absent.
-- [x] Permission prompts occur only after user intent, denial guidance is truthful, and users can return from app settings without losing context.
-- [x] A chosen full-resolution photo is previewed, uploaded with progress/retry, represented once in the live gallery, and removable only by its owner.
-- [x] Gallery metadata changes appear live, baseline order is newest-first, and the justified rows preserve aspect ratios without forced cropping.
-- [x] The inactivity shuffle is stable, configurable, accessible, and resets on user interaction.
-- [x] QR access card provides event code and details without treating an identifier as an automatic bearer token.
-- [x] TV/projection mode is landscape and read-only, with ambient living motion and network-loss resilience.
-- [x] Social features (ND-7): photo likes with counters, guestbook comments/dedications, and user profile statistics are implemented.
-- [x] Unit test suites cover Auth, Capture, and Gallery lifecycle states, error handling, and business logic.
+### Source status (not acceptance evidence)
 
-### Pending review / Next steps when build environment is ready
+Auth, permissions, capture, gallery, display, profile, and social feature surfaces are present in source. Capture source writes `pending` metadata before upload and marks it `ready` only after Storage and Firestore acknowledgement; retry identity and selected URI are in-memory only. Gallery deletion removes Storage before metadata. Likes use a Firestore transaction; comments and likes update local UI after remote acknowledgement. Regression tests were authored but have not been run. These source facts do not establish runtime correctness, owner authorization, availability, accessibility, or design acceptance.
+
+### Pending verification and setup
 See the full review protocol in [Review checklist](REVIEW_CHECKLIST.md).
-- [ ] **Build & compile check**: Run `./gradlew assembleDebug` and `./gradlew testDebugUnitTest` once Java and Android SDK are available in the host environment.
-- [ ] **Hardware validation**: Test on a physical Android device or emulator to verify camera capture, Exif rotation correction, and Photo Picker integration.
+- [ ] **Build, tests, and runtime acceptance**: Compile and execute authored tests, then exercise the current behavior on an authorized emulator/device. No tests, builds, installs, or device checks were run for the current source/doc changes.
+- [ ] **Visual/accessibility validation**: Verify actual contrast, TalkBack, large text, focus/touch states, motion, landscape lock, and offline behavior on devices. Source presence does not establish these criteria.
 - [ ] **Firebase registration**: Download `app/google-services.json` from the owner's Firebase Console and enable Email/Password provider.
-- [ ] **Security rules deployment**: Deploy Firestore and Storage rules enforcing event membership and author-only delete before loading real guest data.
+- [ ] **Security rules and membership**: Decide D-01 through D-07 with the product/privacy owner, then implement, test, and deploy approved Firestore/Storage rules and membership flow before loading real guest data. No rules are implemented or deployed.
 
 ## Open product decisions
 
@@ -92,8 +85,10 @@ See the full review protocol in [Review checklist](REVIEW_CHECKLIST.md).
 |---|---|---|---|
 | D-01 | Does “public shared gallery” mean anyone with a link, or only signed-in event guests? | Restrict reads to authenticated event members; do not expose anonymous reads until explicitly approved. | Open; blocks production rules and launch. |
 | D-02 | Does scanning a QR code grant event membership, or only identify an event? | QR identifies an event; it never grants membership. Define a separate organizer-approved join/invitation process. | Open; no bearer-token behavior implemented. |
-| D-03 | How should newest-first ordering coexist with a five-minute inactivity shuffle, and is the timer per-device or global? | Keep new arrivals newest-first; after five minutes without local interaction, perform one deterministic-per-session visual shuffle and hold it stable until activity or a new cycle. Use a configurable per-device timer; disable the shuffle on TV. | Open; confirm before gallery implementation. |
+| D-03 | How should newest-first ordering coexist with a five-minute inactivity shuffle, and is the timer per-device or global? | Keep new arrivals newest-first; after five minutes without local interaction, perform one deterministic-per-session visual shuffle and hold it stable until activity or a new cycle. Use a configurable per-device timer; disable the shuffle on TV. | Open; current source behavior is not an approved policy or runtime acceptance. |
 | D-04 | How long are event photos retained, and who may delete an event or another person’s content? | Guests delete only their own items; defer admin/bulk deletion and retention promises until an owner and lifecycle are defined. | Open; do not invent retention policy. |
-| D-05 | How is a TV display session authenticated and revoked? | Require an authenticated event session and provide explicit exit/re-authentication; no anonymous display link by default. | Open; resolve before TV mode. |
+| D-05 | How is a TV display session authenticated and revoked? | Require an authenticated event session and provide explicit exit/re-authentication; no anonymous display link by default. | Open; source display UI exists, but approved access/revocation policy remains unresolved. |
 | D-06 | Which App Link domain and web fallback will host QR destinations? | Use an owner-controlled HTTPS Android App Link with a safe web fallback; select and verify the domain before creating links. | Open; no domain or remote resource selected. |
 | D-07 | Must acceptance of the terms be retained, and which policy version/timestamp is required? | Decide with the product/privacy owner; if retention is needed, store only policy version and acceptance time with a clear purpose and deletion lifecycle. | Open; the PR 1 ViewModel only validates a boolean and does not persist consent. |
+
+The stored Firebase download URL is shareable. Whether this exposure is acceptable for event photos, and any revocation/rotation policy, remains unresolved; see [Firebase setup](FIREBASE_SETUP.md).
