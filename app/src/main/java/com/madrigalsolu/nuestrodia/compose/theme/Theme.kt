@@ -2,49 +2,124 @@ package com.madrigalsolu.nuestrodia.compose.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
-private val DarkColorScheme = darkColorScheme(primary = Purple80, secondary = PurpleGrey80, tertiary = Pink80)
+// ponytail: Shapes adhering to 12.dp controls, 16.dp fields, 20.dp buttons, 28.dp hero/cards
+val Shapes = Shapes(
+  extraSmall = RoundedCornerShape(8.dp),
+  small = RoundedCornerShape(12.dp),
+  medium = RoundedCornerShape(16.dp),
+  large = RoundedCornerShape(20.dp),
+  extraLarge = RoundedCornerShape(28.dp),
+)
 
-private val LightColorScheme =
-  lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
+private val LightColorScheme = lightColorScheme(
+  primary = PrimaryLight,
+  onPrimary = OnPrimaryLight,
+  primaryContainer = PrimaryContainerLight,
+  onPrimaryContainer = OnPrimaryContainerLight,
+  secondary = SecondaryLight,
+  onSecondary = OnSecondaryLight,
+  secondaryContainer = SecondaryContainerLight,
+  onSecondaryContainer = OnSecondaryContainerLight,
+  tertiary = TertiaryLight,
+  onTertiary = OnTertiaryLight,
+  tertiaryContainer = TertiaryContainerLight,
+  onTertiaryContainer = OnTertiaryContainerLight,
+  error = ErrorLight,
+  onError = OnErrorLight,
+  errorContainer = ErrorContainerLight,
+  onErrorContainer = OnErrorContainerLight,
+  background = BackgroundLight,
+  onBackground = OnBackgroundLight,
+  surface = SurfaceLight,
+  onSurface = OnSurfaceLight,
+  surfaceVariant = SurfaceVariantLight,
+  onSurfaceVariant = OnSurfaceVariantLight,
+  outline = OutlineLight,
+  outlineVariant = OutlineVariantLight,
+  surfaceContainerLowest = SurfaceContainerLowestLight,
+  surfaceContainerLow = SurfaceContainerLowLight,
+  surfaceContainer = SurfaceContainerLight,
+  surfaceContainerHigh = SurfaceContainerHighLight,
+  surfaceContainerHighest = SurfaceContainerHighestLight,
+  inverseSurface = InverseSurfaceLight,
+  inverseOnSurface = InverseOnSurfaceLight,
+  inversePrimary = InversePrimaryLight,
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-  )
+private val DarkColorScheme = darkColorScheme(
+  primary = PrimaryDark,
+  onPrimary = OnPrimaryDark,
+  primaryContainer = PrimaryContainerDark,
+  onPrimaryContainer = OnPrimaryContainerDark,
+  secondary = SecondaryDark,
+  onSecondary = OnSecondaryDark,
+  secondaryContainer = SecondaryContainerDark,
+  onSecondaryContainer = OnSecondaryContainerDark,
+  tertiary = TertiaryDark,
+  onTertiary = OnTertiaryDark,
+  tertiaryContainer = TertiaryContainerDark,
+  onTertiaryContainer = OnTertiaryContainerDark,
+  error = ErrorDark,
+  onError = OnErrorDark,
+  errorContainer = ErrorContainerDark,
+  onErrorContainer = OnErrorContainerDark,
+  background = BackgroundDark,
+  onBackground = OnBackgroundDark,
+  surface = SurfaceDark,
+  onSurface = OnSurfaceDark,
+  surfaceVariant = SurfaceVariantDark,
+  onSurfaceVariant = OnSurfaceVariantDark,
+  outline = OutlineDark,
+  outlineVariant = OutlineVariantDark,
+  surfaceContainerLowest = SurfaceContainerLowestDark,
+  surfaceContainerLow = SurfaceContainerLowDark,
+  surfaceContainer = SurfaceContainerDark,
+  surfaceContainerHigh = SurfaceContainerHighDark,
+  surfaceContainerHighest = SurfaceContainerHighestDark,
+  inverseSurface = InverseSurfaceDark,
+  inverseOnSurface = InverseOnSurfaceDark,
+  inversePrimary = InversePrimaryDark,
+)
 
 @Composable
 fun NuestroDATheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  // ponytail: dynamicColor defaults to false so wallpaper does not recolor the authored wedding palette
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
-  val colorScheme =
-    when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
+  val colorScheme = when {
+    dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+      val context = LocalContext.current
+      if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     }
+    darkTheme -> DarkColorScheme
+    else -> LightColorScheme
+  }
 
-  MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  MaterialTheme(
+    colorScheme = colorScheme,
+    shapes = Shapes,
+    typography = Typography,
+    content = content,
+  )
 }
+
+// ponytail: Alias for natural naming
+@Composable
+fun NuestroDiaTheme(
+  darkTheme: Boolean = isSystemInDarkTheme(),
+  dynamicColor: Boolean = false,
+  content: @Composable () -> Unit,
+) = NuestroDATheme(darkTheme = darkTheme, dynamicColor = dynamicColor, content = content)
