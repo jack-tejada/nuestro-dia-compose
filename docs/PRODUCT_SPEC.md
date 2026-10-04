@@ -80,6 +80,7 @@ Provide a landscape, read-only display mode for a television or projected screen
 - [x] Unit test suites cover Auth, Capture, and Gallery lifecycle states, error handling, and business logic.
 
 ### Pending review / Next steps when build environment is ready
+See the full review protocol in [Review checklist](REVIEW_CHECKLIST.md).
 - [ ] **Build & compile check**: Run `./gradlew assembleDebug` and `./gradlew testDebugUnitTest` once Java and Android SDK are available in the host environment.
 - [ ] **Hardware validation**: Test on a physical Android device or emulator to verify camera capture, Exif rotation correction, and Photo Picker integration.
 - [ ] **Firebase registration**: Download `app/google-services.json` from the owner's Firebase Console and enable Email/Password provider.

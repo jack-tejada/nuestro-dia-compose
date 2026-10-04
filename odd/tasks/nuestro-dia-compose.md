@@ -57,7 +57,9 @@ All planned features have been implemented following the architectural boundarie
 
 ## Relevant files
 
+- `README.md` — project overview, module map, and build guidelines.
 - `ARCHITECTURE.md` — current code boundaries, component status, safety rules, and architecture flow.
+- `docs/REVIEW_CHECKLIST.md` — comprehensive review matrix, build commands, and device QA steps.
 - `docs/PRODUCT_SPEC.md` — product requirements, acceptance criteria, and explicit decision log.
 - `docs/DESIGN_SYSTEM.md` — color roles, typography, component shapes, motion, and accessibility.
 - `docs/FIREBASE_SETUP.md` — manual Firebase checklist, schema, security/privacy boundaries.

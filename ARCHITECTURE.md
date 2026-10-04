@@ -50,5 +50,6 @@ Design tokens and product specifications are documented in:
 - [Product specification](docs/PRODUCT_SPEC.md) — user journeys, photo lifecycle, gallery behavior, TV display, open decisions.
 - [Design system](docs/DESIGN_SYSTEM.md) — source color roles, typography, component shapes, motion, and accessibility.
 - [Firebase setup](docs/FIREBASE_SETUP.md) — manual setup checklist and security boundary guidelines.
+- [Review checklist](docs/REVIEW_CHECKLIST.md) — comprehensive review matrix, build commands, and device QA steps.
 
 Implementation followed the Ponytail philosophy: minimal boilerplate, standard platform features, and clean feature isolation.
