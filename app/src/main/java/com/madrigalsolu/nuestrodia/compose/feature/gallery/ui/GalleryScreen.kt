@@ -1,6 +1,5 @@
 package com.madrigalsolu.nuestrodia.compose.feature.gallery.ui
 
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -11,7 +10,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -54,7 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +62,7 @@ import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Photo
 import com.madrigalsolu.nuestrodia.compose.feature.permissions.rememberCameraPermissionController
 import com.madrigalsolu.nuestrodia.compose.theme.ExpressiveIntSizeSpring
 import com.madrigalsolu.nuestrodia.compose.theme.expressivePress
+import com.madrigalsolu.nuestrodia.compose.ui.util.PhotoImage
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -431,17 +429,7 @@ private fun GalleryThumbnail(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val context = LocalContext.current
   val interactionSource = remember { MutableInteractionSource() }
-
-  // ponytail: Memory-safe and Exif-aware downsampled decode
-  val bitmap = remember(photo.uriString) {
-    com.madrigalsolu.nuestrodia.compose.ui.util.decodeSampledBitmapFromUri(
-      context = context,
-      uriString = photo.uriString,
-      maxDimension = 640,
-    )
-  }
 
   Box(
     modifier = modifier
@@ -456,14 +444,12 @@ private fun GalleryThumbnail(
       ),
     contentAlignment = Alignment.BottomStart,
   ) {
-    if (bitmap != null) {
-      Image(
-        bitmap = bitmap,
-        contentDescription = "Fotografía de ${photo.ownerName}",
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxSize(),
-      )
-    }
+    PhotoImage(
+      uri = photo.uriString,
+      contentDescription = "Fotografía de ${photo.ownerName}",
+      contentScale = ContentScale.Crop,
+      modifier = Modifier.fillMaxSize(),
+    )
 
     Surface(
       color = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f),

@@ -1,6 +1,5 @@
 package com.madrigalsolu.nuestrodia.compose.feature.capture.ui
 
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -8,7 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -32,11 +30,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -50,7 +50,7 @@ import com.madrigalsolu.nuestrodia.compose.theme.ExpressiveIntSizeSpring
 import com.madrigalsolu.nuestrodia.compose.theme.ExpressiveSpringSmooth
 import com.madrigalsolu.nuestrodia.compose.theme.expressivePress
 
-import com.madrigalsolu.nuestrodia.compose.ui.util.decodeSampledBitmapFromUri
+import com.madrigalsolu.nuestrodia.compose.ui.util.PhotoImage
 
 @Composable
 fun CapturePreviewScreen(
@@ -66,14 +66,9 @@ fun CapturePreviewScreen(
   val context = LocalContext.current
   val uploadState by viewModel.uploadState.collectAsState()
 
-  // ponytail: Memory-safe and Exif-aware downsampled decode
-  val imageBitmap = remember(uriString) {
-    decodeSampledBitmapFromUri(context, uriString, maxDimension = 1920)
-  }
-
-  val imageWidth = imageBitmap?.width ?: 1200
-  val imageHeight = imageBitmap?.height ?: 800
-  val calcAspectRatio = if (imageHeight > 0) imageWidth.toFloat() / imageHeight.toFloat() else 1.33f
+  var imageWidth by remember(uriString) { mutableIntStateOf(1200) }
+  var imageHeight by remember(uriString) { mutableIntStateOf(800) }
+  val imageAspectRatio = imageWidth.toFloat() / imageHeight
 
   LaunchedEffect(uploadState) {
     if (uploadState is UploadState.Success) {
@@ -105,25 +100,23 @@ fun CapturePreviewScreen(
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .aspectRatio(calcAspectRatio.coerceIn(0.5f, 2.0f))
+          .aspectRatio(imageAspectRatio.coerceIn(0.5f, 2.0f))
           .clip(MaterialTheme.shapes.extraLarge)
           .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         contentAlignment = Alignment.Center,
       ) {
-        if (imageBitmap != null) {
-          Image(
-            bitmap = imageBitmap,
-            contentDescription = "Vista previa de la foto seleccionada",
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(),
-          )
-        } else {
-          Text(
-            text = "No se pudo cargar la imagen",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
-          )
-        }
+        PhotoImage(
+          uri = uriString,
+          contentDescription = "Vista previa de la foto seleccionada",
+          contentScale = ContentScale.Fit,
+          modifier = Modifier.fillMaxSize(),
+          onImageLoaded = { width, height ->
+            if (width > 0 && height > 0) {
+              imageWidth = width
+              imageHeight = height
+            }
+          },
+        )
       }
 
       Spacer(modifier = Modifier.height(24.dp))

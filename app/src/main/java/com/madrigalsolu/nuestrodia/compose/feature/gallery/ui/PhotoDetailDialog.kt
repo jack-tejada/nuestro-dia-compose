@@ -1,7 +1,6 @@
 package com.madrigalsolu.nuestrodia.compose.feature.gallery.ui
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -46,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -54,7 +52,7 @@ import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Comment
 import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Photo
 import com.madrigalsolu.nuestrodia.compose.theme.ExpressiveSpringBouncy
 import com.madrigalsolu.nuestrodia.compose.theme.expressivePress
-import com.madrigalsolu.nuestrodia.compose.ui.util.decodeSampledBitmapFromUri
+import com.madrigalsolu.nuestrodia.compose.ui.util.PhotoImage
 import kotlinx.coroutines.flow.Flow
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -70,7 +68,6 @@ fun PhotoDetailDialog(
   onToggleLike: (Photo) -> Unit,
   onAddComment: (String) -> Unit,
 ) {
-  val context = LocalContext.current
   var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
   var commentInput by rememberSaveable { mutableStateOf("") }
   val comments by commentsFlow.collectAsState(initial = emptyList())
@@ -87,15 +84,6 @@ fun PhotoDetailDialog(
     animationSpec = ExpressiveSpringBouncy,
     label = "DetailDialogZoom",
   )
-
-  // ponytail: Memory-safe and Exif-aware downsampled decode
-  val imageBitmap = remember(photo.uriString) {
-    decodeSampledBitmapFromUri(
-      context = context,
-      uriString = photo.uriString,
-      maxDimension = 1920,
-    )
-  }
 
   val formattedDate = remember(photo.timestamp) {
     val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -134,20 +122,12 @@ fun PhotoDetailDialog(
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
           contentAlignment = Alignment.Center,
         ) {
-          if (imageBitmap != null) {
-            Image(
-              bitmap = imageBitmap,
-              contentDescription = "Fotografía compartida por ${photo.ownerName}",
-              contentScale = ContentScale.Fit,
-              modifier = Modifier.fillMaxSize(),
-            )
-          } else {
-            Text(
-              text = "Fotografía del evento",
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
+          PhotoImage(
+            uri = photo.uriString,
+            contentDescription = "Fotografía compartida por ${photo.ownerName}",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize(),
+          )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -1,10 +1,7 @@
 package com.madrigalsolu.nuestrodia.compose.feature.display.ui
 
-import android.graphics.BitmapFactory
-import android.net.Uri
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,16 +28,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.madrigalsolu.nuestrodia.compose.feature.capture.data.Photo
 import com.madrigalsolu.nuestrodia.compose.feature.gallery.data.Event
 import com.madrigalsolu.nuestrodia.compose.feature.gallery.data.GalleryRepository
 import com.madrigalsolu.nuestrodia.compose.theme.rememberExpressiveAmbientScale
+import com.madrigalsolu.nuestrodia.compose.ui.util.PhotoImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import java.text.SimpleDateFormat
@@ -195,17 +191,6 @@ fun TvDisplayScreen(
 
 @Composable
 private fun TvPhotoImage(photo: Photo, scale: Float) {
-  val context = LocalContext.current
-
-  // ponytail: Memory-safe and Exif-aware downsampled decode
-  val bitmap = remember(photo.uriString) {
-    com.madrigalsolu.nuestrodia.compose.ui.util.decodeSampledBitmapFromUri(
-      context = context,
-      uriString = photo.uriString,
-      maxDimension = 1920,
-    )
-  }
-
   Box(
     modifier = Modifier
       .fillMaxSize()
@@ -215,13 +200,11 @@ private fun TvPhotoImage(photo: Photo, scale: Float) {
       },
     contentAlignment = Alignment.Center,
   ) {
-    if (bitmap != null) {
-      Image(
-        bitmap = bitmap,
-        contentDescription = "Fotografía de ${photo.ownerName}",
-        contentScale = ContentScale.Fit,
-        modifier = Modifier.fillMaxSize(),
-      )
-    }
+    PhotoImage(
+      uri = photo.uriString,
+      contentDescription = "Fotograf\u00eda de ${photo.ownerName}",
+      contentScale = ContentScale.Fit,
+      modifier = Modifier.fillMaxSize(),
+    )
   }
 }

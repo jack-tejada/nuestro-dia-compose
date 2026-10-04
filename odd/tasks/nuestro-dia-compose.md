@@ -55,6 +55,40 @@ All planned features have been implemented following the architectural boundarie
 - [ ] Add `app/google-services.json` and enable Email/Password provider in Firebase Console.
 - [ ] Deploy Firestore & Storage rules matching `docs/FIREBASE_SETUP.md`.
 
+## Audit corrections (2026-10-03)
+
+The current source at `a5b9bc2` implements the feature surfaces, but source presence is not functional verification. The audit found incompatible HTTPS image decoding, swallowed backend failures, unstable retry IDs, unsafe concurrent likes, and stale status documentation.
+
+### Authorized scope and checks
+
+- Correct local source and documentation only. No Firebase account access, configuration download, rules deployment, push, PR, or merge.
+- Keep app copy Spanish and technical artifacts English; use Ponytail minimalism.
+- The user explicitly requests no compilation or test execution for now. Author focused regression checks where useful, but record them as unexecuted. Use static readback and `git diff --check`; do not claim RED/GREEN, runtime success, or security certification.
+- Product decisions D-01 through D-07 remain user-owned. Membership policy, remote authorization, retention, consent persistence, and visual/device acceptance cannot be invented or marked complete.
+- Reuse this feature ledger and mirror it at `odd/nuestro-dia-compose/tasks`. Prior native review authority belongs to its immutable historical candidate; do not rewrite, invalidate, or reuse it for new corrections.
+
+### Work units
+
+| ID | Source-writing task | Route and evidence | State |
+|---|---|---|---|
+| ND-8 | Replace unsupported remote photo decoding with maintained URI/HTTPS loading and meaningful loading/failure states. | Delegated: shared image flow across multiple non-trivial screens. | Source written; runtime-unverified |
+| ND-9 | Propagate upload/delete failures, preserve cancellation, reuse upload identity across retry, and handle partial deletion safely. | Delegated: repository/ViewModel contracts and regression test changes. | Pending |
+| ND-10 | Use current backend state for concurrent likes and propagate social persistence failures. | Delegated: transaction logic, local parity, and regression checks. | Pending |
+| ND-11 | Reconcile README, architecture, product/design/Firebase docs and checklist with authored source versus verified behavior. | Delegated: multiple documentation surfaces and current-source reconciliation. | Pending |
+
+Acceptance is source-level behavior plus honest verification status. Keep test/device/Firebase checks pending until an authorized capable environment exists. Backend membership/rules and privacy decisions remain blocked on owner input; they are not silently included in the completed corrections.
+
+Forecast: approximately 600-900 authored additions/deletions across coherent units (advisory only; do not omit tests or compress code to fit a line budget). Delivery uses the previously selected local stacked-to-main work-unit strategy; no PR creation is authorized. First correction boundary is `a5b9bc2`; record per-unit commit identities, line counts and native assessment outcomes. Source-mutating normalization must precede each native candidate freeze; after freeze use check-only operations.
+
+### Evidence and next action
+
+- Branch: `fix/audit-reliability`.
+- Build/test/device/Firebase checks: intentionally not run by user request.
+- ND-8 source: Coil 3.4.0 Compose + OkHttp loading replaces the synchronous `ContentResolver.openInputStream` decoder across gallery, detail, TV, and capture preview; one `PhotoImage` handles Spanish loading/failure states, disk caching is disabled, Fit/Crop plus EXIF-aware decoding are retained, and capture upload dimensions still update from the asynchronously loaded image.
+- ND-8 static checks: `git diff --check` passed; repository-wide caller grep found no `decodeSampledBitmapFromUri` references after removing `ImageUtils.kt`; dependency aliases and app usage were read back. No tests/build/device check ran, as instructed; runtime image loading remains unverified.
+- ND-8 dependency rationale: Coil 3.4.0's release notes list Kotlin 2.3.10 and Compose 1.9.3, matching the installed Kotlin 2.3.20 generation without raising the project toolchain to use 3.6.3; the latter release is built with Kotlin 2.4.10. HTTPS support comes from Coil's documented `coil-network-okhttp` artifact.
+- Next action: ND-9 upload/delete reliability corrections.
+
 ## Relevant files
 
 - `README.md` — project overview, module map, and build guidelines.
